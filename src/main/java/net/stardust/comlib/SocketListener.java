@@ -40,12 +40,15 @@ public class SocketListener extends SocketConnectionHandler implements Runnable 
             while(!isClosed()) {
                 Object obj = input.readObject();
                 if(obj instanceof Request<?> request) {
+                    Response<?> response;
                     try {
-                        output.writeObject(mapper.handle(request));
-                        output.flush();
+                        response = mapper.handle(request);
                     } catch(MappingException e) {
+                        response = Response.emptyResponse(ResponseStatus.BAD_REQUEST);
                         e.printStackTrace();
                     }
+                    output.writeObject(response);
+                    output.flush();
                 }
             }
         } catch(IOException e) {
