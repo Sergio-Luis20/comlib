@@ -1,6 +1,15 @@
 package net.stardust.comlib;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public final class ResponseStatus {
+
+    private static final Map<String, Integer> VALUES;
     
     public static final int CONTINUE = 100;
     public static final int SWITCHING_PROTOCOLS = 101;
@@ -69,5 +78,40 @@ public final class ResponseStatus {
     public static final int NETWORK_AUTHENTICATION_REQUIRED = 511;
 
     private ResponseStatus() {}
+
+    public static Map<String, Integer> getMap() {
+        Map<String, Integer> copy = new HashMap<>();
+        VALUES.forEach((key, value) -> copy.put(key, value));
+        return copy;
+    }
+
+    public static Set<String> getNames() {
+        return VALUES.keySet();
+    }
+
+    public static List<Integer> getNumbers() {
+        return new ArrayList<>(VALUES.values());
+    }
+
+    public static int getByName(String name) {
+        return VALUES.get(name);
+    }
+
+    public static boolean containsStatus(int status) {
+        return VALUES.containsValue(status);
+    }
+
+    static {
+        Field[] fields = ResponseStatus.class.getFields();
+        VALUES = new HashMap<>();
+        for(int i = 0; i < fields.length; i++) {
+            try {
+                Field field = fields[i];
+                VALUES.put(field.getName(), (int) field.get(null));
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

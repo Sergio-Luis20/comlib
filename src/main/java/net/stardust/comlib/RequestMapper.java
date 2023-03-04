@@ -1,8 +1,10 @@
 package net.stardust.comlib;
 
-@FunctionalInterface
+import java.io.Serializable;
+
 public interface RequestMapper {
-    
-    <T, U> Response<T> handle(Request<U> request) throws Exception;
+
+    String getID();
+    <T extends Serializable, U extends Serializable> Response<T> handle(Request<U> request) throws Exception;
 
 }
