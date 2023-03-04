@@ -46,7 +46,10 @@ public class SocketListener extends SocketConnectionHandler implements Runnable 
                     } catch(MappingException e) {
                         response = Response.emptyResponse(ResponseStatus.BAD_REQUEST);
                         e.printStackTrace();
-                    }
+                    } catch(Exception e) {
+						response = Response.emptyResponse(ResponseStatus.INTERNAL_SERVER_ERROR);
+						e.printStackTrace();
+					}
                     output.writeObject(response);
                     output.flush();
                 }
