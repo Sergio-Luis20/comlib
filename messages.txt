@@ -1,0 +1,3 @@
+register=id Registra uma conexão com tal id
+close=id Fecha uma conexão com tal id
+closeServer Fecha o servidor de forma geral

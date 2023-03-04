@@ -9,9 +9,9 @@ import java.util.Objects;
 
 public class SocketConnectionHandler implements ConnectionHandler {
 
-    private Socket socket;
-    private ObjectInputStream input;
-    private ObjectOutputStream output;
+    protected Socket socket;
+    protected ObjectInputStream input;
+    protected ObjectOutputStream output;
 
     public SocketConnectionHandler() {
         this(new Socket());
@@ -20,7 +20,7 @@ public class SocketConnectionHandler implements ConnectionHandler {
     public SocketConnectionHandler(Socket socket) {
         this.socket = Objects.requireNonNull(socket);
     }
-
+    
     @Override
     public boolean isClosed() {
         return socket.isClosed();

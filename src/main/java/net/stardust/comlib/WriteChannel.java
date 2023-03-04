@@ -13,21 +13,22 @@ public class WriteChannel extends Channel {
         synchronized(queue) {
             if(o != null) {
                 queue.add(o);
+                queue.notifyAll();
             }
         }
     }
 
     @Override
     protected void work() throws Exception {
-        try(ObjectOutputStream output = new ObjectOutputStream(handler.getOutputStream())) {
-            while(!closed) {
-                synchronized(queue) {
-                    Serializable obj = queue.poll();
-                    if(obj != null) {
-                        output.writeObject(obj);
-                        output.flush();
-                    }
+        while(!closed) {
+            synchronized(queue) {
+                Serializable obj = queue.poll();
+                if(obj != null) {
+                    ObjectOutputStream output = handler.getOutputStream();
+                    output.writeObject(obj);
+                    output.flush();
                 }
+                queue.wait();
             }
         }
     }

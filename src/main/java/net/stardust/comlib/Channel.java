@@ -10,15 +10,19 @@ import java.util.Queue;
 public abstract class Channel implements Runnable, Closeable {
     
     protected final ConnectionHandler handler;
+    protected final Thread worker;
     protected Queue<Serializable> queue;
     protected boolean closed;
 
     public Channel(ConnectionHandler handler) {
         this.handler = Objects.requireNonNull(handler);
         queue = new LinkedList<>();
-        Thread reader = new Thread(this);
-        reader.setDaemon(true);
-        reader.start();
+        worker = new Thread(this);
+        worker.setDaemon(true);
+    }
+
+    public void start() {
+        worker.start();
     }
 
     protected abstract void work() throws Exception;
@@ -26,6 +30,8 @@ public abstract class Channel implements Runnable, Closeable {
     protected boolean printStackTrace() {
         return false;
     }
+
+    protected void catchWorkerException(Exception e) {}
     
     public boolean isClosed() {
         return handler.isClosed();
@@ -41,9 +47,7 @@ public abstract class Channel implements Runnable, Closeable {
         try(this) {
             work();
         } catch(Exception e) {
-            if(printStackTrace()) {
-                e.printStackTrace();
-            }
+            catchWorkerException(e);
         }
     }
  
