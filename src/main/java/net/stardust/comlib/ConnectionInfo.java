@@ -53,7 +53,7 @@ public class ConnectionInfo {
     }
 
     public void setPort(int port) {
-        if(port < 0 || port >= 65536) {
+        if(port < 1024 || port >= 65536) {
             throw new IllegalArgumentException("invalid port: " + port);
         }
         this.port = port;
