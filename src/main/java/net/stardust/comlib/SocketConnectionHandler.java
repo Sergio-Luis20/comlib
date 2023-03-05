@@ -51,8 +51,8 @@ public class SocketConnectionHandler implements ConnectionHandler {
                 socket.setSoTimeout(socketInfo.getSoTimeout());
             }
             socket.connect(new InetSocketAddress(info.getIP(), info.getPort()), info.getTimeout());
-            input = new ObjectInputStream(socket.getInputStream());
             output = new ObjectOutputStream(socket.getOutputStream());
+            input = new ObjectInputStream(socket.getInputStream());
         } catch(IOException e) {
             throw new ConnectionException(e);
         }

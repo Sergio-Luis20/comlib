@@ -30,7 +30,7 @@ public class SocketListener extends RequestListener {
         try {
             ObjectOutputStream output = handler.getOutputStream();
             ObjectInputStream input = handler.getInputStream();
-            output.writeUTF("register=" + id);
+            output.writeObject("register=" + id);
             output.flush();
             while(!handler.isClosed()) {
                 Object obj = input.readObject();
