@@ -19,6 +19,14 @@ public class SocketConnectionHandler implements ConnectionHandler {
 
     public SocketConnectionHandler(Socket socket) {
         this.socket = Objects.requireNonNull(socket);
+        if(socket.isConnected()) {
+            try {
+                input = new ObjectInputStream(socket.getInputStream());
+                output = new ObjectOutputStream(socket.getOutputStream());
+            } catch(IOException e) {
+                throw new RuntimeException("socket connected but thrown IOException at streams", e);
+            }
+        }
     }
 
     @Override
