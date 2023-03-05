@@ -1,9 +1,10 @@
 package net.stardust.comlib;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
 
-public abstract class RequestListener implements Runnable {
+public abstract class RequestListener implements Runnable, Closeable {
     
     protected final String id;
     protected RequestMapper mapper;
@@ -20,6 +21,19 @@ public abstract class RequestListener implements Runnable {
 
     public void start() {
         thread.start();
+    }
+
+    public boolean isConnected() {
+        return handler.isConnected();
+    }
+
+    public boolean isClosed() {
+        return handler.isClosed();
+    }
+
+    @Override
+    public void close() throws IOException {
+        handler.close();
     }
 
     protected void catchConnectionException(ConnectionException e) {}
