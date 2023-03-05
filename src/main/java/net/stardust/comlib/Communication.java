@@ -13,7 +13,7 @@ public final class Communication {
 
     @SuppressWarnings("unchecked")
     public static <T extends Serializable> Response<T> send(Request<?> request) throws IOException {
-        try(ConnectionHandler handler = new SocketConnectionHandler()) {
+        try(ConnectionHandler handler = newConnectionHandler()) {
             handler.connect(INFO);
             if(request != null) {
                 ObjectOutputStream output = handler.getOutputStream();
@@ -35,6 +35,10 @@ public final class Communication {
         SocketConnectionHandler handler = new SocketConnectionHandler();
         handler.connect(INFO);
         return new SocketListener(id, mapper, handler);
+    }
+
+    public static ConnectionHandler newConnectionHandler() {
+        return new SocketConnectionHandler();
     }
 
     static {
