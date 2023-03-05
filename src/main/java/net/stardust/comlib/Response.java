@@ -1,6 +1,7 @@
 package net.stardust.comlib;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 public interface Response<T extends Serializable> extends DataHolder<T> {
     
@@ -11,8 +12,36 @@ public interface Response<T extends Serializable> extends DataHolder<T> {
     }
 
     public static <U extends Serializable> Response<U> emptyResponse(int status) {
-        return new ResponseBuilder<U>().status(status).build();
-        
+        return newResponse(null, null, status, null);
+    }
+
+    public static <U extends Serializable> Response<U> newResponse(String sender, String receiver, int status, U content) {
+        if(!ResponseStatus.containsStatus(status)) {
+            throw new IllegalArgumentException("unknown status: " + status);
+        }
+        return new Response<>() {
+            
+            @Override
+            public String getSender() {
+                return sender;
+            }
+
+            @Override
+            public String getReceiver() {
+                return receiver;
+            }
+
+            @Override
+            public int getStatus() {
+                return status;
+            }
+
+            @Override
+            public Optional<U> getContent() {
+                return Optional.ofNullable(content);
+            }
+
+        };
     }
     
 }
