@@ -6,9 +6,10 @@ import java.io.ObjectOutputStream;
 
 public interface ConnectionHandler extends Closeable {
     
+    boolean isConnected();
     boolean isClosed();
-    void connect(ConnectionInfo info) throws Exception;
-    ObjectInputStream getInputStream() throws Exception;
-    ObjectOutputStream getOutputStream() throws Exception;
+    void connect(ConnectionInfo info) throws ConnectionException;
+    ObjectInputStream getInputStream() throws ConnectionException;
+    ObjectOutputStream getOutputStream() throws ConnectionException;
 
 }

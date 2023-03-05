@@ -1,43 +1,38 @@
 package net.stardust.comlib;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Objects;
 
-public class SocketListener extends SocketConnectionHandler implements Runnable {
-
-    protected final String id;
-    protected RequestMapper mapper;
-    private Thread thread;
-
-    public SocketListener(String id, RequestMapper mapper, Socket socket) {
-        super(socket);
-        this.id = Objects.requireNonNull(id);
-        this.mapper = Objects.requireNonNull(mapper);
-        thread = new Thread(this);
-        thread.setDaemon(true);
-    }
+public class SocketListener extends RequestListener {
 
     public SocketListener(String id, RequestMapper mapper) {
         this(id, mapper, new Socket());
     }
 
-    public void start() {
-        thread.start();
+    public SocketListener(String id, RequestMapper mapper, Socket socket) {
+        this(id, mapper, new SocketConnectionHandler(socket));
+    }
+
+    public SocketListener(String id, RequestMapper mapper, SocketConnectionHandler handler) {
+        super(id, mapper, handler);
     }
 
     @Override
     public final void run() {
-        if(!socket.isConnected()) {
+        if(!handler.isConnected()) {
             String message = "cannot init socket listener because socket isn't connected";
             SocketException socketException = new SocketException(message);
             throw new RuntimeException(socketException);
         }
         try {
+            ObjectOutputStream output = handler.getOutputStream();
+            ObjectInputStream input = handler.getInputStream();
             output.writeUTF("register=" + id);
             output.flush();
-            while(!isClosed()) {
+            while(!handler.isClosed()) {
                 Object obj = input.readObject();
                 if(obj instanceof Request<?> request) {
                     Response<?> response;
@@ -54,21 +49,13 @@ public class SocketListener extends SocketConnectionHandler implements Runnable 
                     output.flush();
                 }
             }
+        } catch(ConnectionException e) {
+            catchConnectionException(e);
         } catch(IOException e) {
             catchIOException(e);
         } catch(ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    protected void catchIOException(IOException e) {}
-
-    public String getID() {
-        return id;
-    }
-
-    public RequestMapper getMapper() {
-        return mapper;
     }
 
 }

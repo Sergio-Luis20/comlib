@@ -20,6 +20,11 @@ public class SocketConnectionHandler implements ConnectionHandler {
     public SocketConnectionHandler(Socket socket) {
         this.socket = Objects.requireNonNull(socket);
     }
+
+    @Override
+    public boolean isConnected() {
+        return socket.isConnected();
+    }
     
     @Override
     public boolean isClosed() {
@@ -32,13 +37,17 @@ public class SocketConnectionHandler implements ConnectionHandler {
     }
 
     @Override
-    public synchronized void connect(ConnectionInfo info) throws IOException {
-        if(info instanceof SocketInfo socketInfo) {
-            socket.setSoTimeout(socketInfo.getSoTimeout());
+    public synchronized void connect(ConnectionInfo info) throws ConnectionException {
+        try {
+            if(info instanceof SocketInfo socketInfo) {
+                socket.setSoTimeout(socketInfo.getSoTimeout());
+            }
+            socket.connect(new InetSocketAddress(info.getIP(), info.getPort()), info.getTimeout());
+            input = new ObjectInputStream(socket.getInputStream());
+            output = new ObjectOutputStream(socket.getOutputStream());
+        } catch(IOException e) {
+            throw new ConnectionException(e);
         }
-        socket.connect(new InetSocketAddress(info.getIP(), info.getPort()), info.getTimeout());
-        input = new ObjectInputStream(socket.getInputStream());
-        output = new ObjectOutputStream(socket.getOutputStream());
     }
 
     @Override
