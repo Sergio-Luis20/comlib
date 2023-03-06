@@ -58,4 +58,7 @@ public class SocketListener extends RequestListener {
         }
     }
 
+    protected void catchConnectionException(ConnectionException e) {}
+    protected void catchIOException(IOException e) {}
+
 }

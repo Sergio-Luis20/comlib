@@ -33,7 +33,10 @@ public final class Communication {
 
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {
         SocketConnectionHandler handler = new SocketConnectionHandler();
-        handler.connect(INFO);
+        SocketInfo info = new SocketInfo(INFO.getIP(), INFO.getPort());
+        info.setTimeout(INFO.getTimeout());
+        info.setSoTimeout(0);
+        handler.connect(info);
         return new SocketListener(id, mapper, handler);
     }
 

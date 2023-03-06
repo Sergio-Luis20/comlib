@@ -19,8 +19,8 @@ public abstract class RequestListener implements Runnable, Closeable {
         thread.setDaemon(true);
     }
 
-    public void start() {
-        thread.start();
+    public void connect(ConnectionInfo info) throws ConnectionException {
+        handler.connect(info);
     }
 
     public boolean isConnected() {
@@ -36,8 +36,9 @@ public abstract class RequestListener implements Runnable, Closeable {
         handler.close();
     }
 
-    protected void catchConnectionException(ConnectionException e) {}
-    protected void catchIOException(IOException e) {}
+    public void start() {
+        thread.start();
+    }
 
     public String getID() {
         return id;

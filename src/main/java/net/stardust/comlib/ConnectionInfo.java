@@ -3,6 +3,7 @@ package net.stardust.comlib;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,16 +22,23 @@ public class ConnectionInfo {
 
     public ConnectionInfo(Path file) throws IOException {
         List<String> list = Files.readAllLines(file);
-        Map<String, String> info = new HashMap<>();
+        info = new HashMap<>();
         for(String str : list) {
             String[] pair = str.split("=");
             info.put(pair[0], pair[1]);
         }
-        this.info = info;
         setIP(info.get("server-ip"));
         setPort(Integer.parseInt(info.get("server-port")));
         String timeout = info.get("timeout");
         setTimeout(timeout == null ? 0 : Integer.parseInt(timeout));
+    }
+
+    public ConnectionInfo(Map<String, String> info) {
+        setIP(info.get("server-ip"));
+        setPort(Integer.parseInt(info.get("server-port")));
+        String timeout = info.get("timeout");
+        setTimeout(timeout == null ? 0 : Integer.parseInt(timeout));
+        this.info = info;
     }
 
     public String getIP() {
@@ -65,6 +73,10 @@ public class ConnectionInfo {
 
     public void setTimeout(int timeout) {
         this.timeout = timeout < 0 ? 0 : timeout;
+    }
+
+    public Map<String, String> getMap() {
+        return Collections.unmodifiableMap(info);
     }
 
     @Override

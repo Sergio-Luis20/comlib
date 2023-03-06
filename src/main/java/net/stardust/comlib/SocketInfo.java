@@ -3,6 +3,7 @@ package net.stardust.comlib;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class SocketInfo extends ConnectionInfo {
 
@@ -14,6 +15,15 @@ public class SocketInfo extends ConnectionInfo {
 
     public SocketInfo(Path file) throws IOException {
         super(file);
+        subConstructor();
+    }
+
+    public SocketInfo(Map<String, String> info) {
+        super(info);
+        subConstructor();
+    }
+
+    private void subConstructor() {
         String soTimeout = info.get("so-timeout");
         setSoTimeout(soTimeout == null ? 0 : Integer.parseInt(soTimeout));
     }
