@@ -13,9 +13,9 @@ public final class Communication {
 
     @SuppressWarnings("unchecked")
     public static <T extends Serializable> Response<T> send(Request<?> request) throws IOException {
-        try(ConnectionHandler handler = newConnectionHandler()) {
-            handler.connect(INFO);
-            if(request != null) {
+        if(request != null) {
+            try(ConnectionHandler handler = newConnectionHandler()) {
+                handler.connect(INFO);
                 ObjectOutputStream output = handler.getOutputStream();
                 output.writeObject(request);
                 output.flush();
@@ -27,8 +27,8 @@ public final class Communication {
                     }
                 }
             }
-            return Response.emptyResponse();
         }
+        return Response.emptyResponse();
     }
 
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {

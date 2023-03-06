@@ -11,6 +11,10 @@ public interface Request<T extends Serializable> extends DataHolder<T> {
         return newRequest(null, receiver, null, content);
     }
 
+    public static <U extends Serializable> Request<U> noMethodRequest(String sender, String receiver, U content) {
+        return newRequest(sender, receiver, null, content);
+    }
+
     public static <U extends Serializable> Request<U> newRequest(String sender, String receiver, RequestMethod method, U content) {
         return new Request<>() {
             
