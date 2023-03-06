@@ -47,18 +47,17 @@ public class SocketListener extends RequestListener {
 					}
                     output.writeObject(response);
                     output.flush();
+                } else {
+                    throw new IOException(obj + " from " + obj.getClass() + " is not an implementation of " + Request.class);
                 }
             }
-        } catch(ConnectionException e) {
-            catchConnectionException(e);
         } catch(IOException e) {
             catchIOException(e);
-        } catch(ClassNotFoundException e) {
+        } catch(Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected void catchConnectionException(ConnectionException e) {}
     protected void catchIOException(IOException e) {}
 
 }

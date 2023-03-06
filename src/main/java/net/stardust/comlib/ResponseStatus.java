@@ -97,6 +97,15 @@ public final class ResponseStatus {
         return VALUES.get(name);
     }
 
+    public static String getName(int status) {
+        for(String name : getNames()) {
+            if(VALUES.get(name) == status) {
+                return name;
+            }
+        }
+        return null;
+    }
+
     public static boolean containsStatus(int status) {
         return VALUES.containsValue(status);
     }
