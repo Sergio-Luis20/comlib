@@ -5,31 +5,21 @@ import java.io.Serializable;
 
 public class WriteChannel extends Channel {
 
-    public WriteChannel(ConnectionHandler handler) {
-        super(handler);
+    public WriteChannel(ConnectionHandler handler, String id) {
+        super(handler, id);
     }
 
     public void write(Serializable o) {
-        synchronized(queue) {
-            if(o != null) {
-                queue.add(o);
-                queue.notifyAll();
-            }
-        }
+        queue.add(o);
     }
 
     @Override
     protected void work() throws Exception {
-        while(!closed) {
-            synchronized(queue) {
-                Serializable obj = queue.poll();
-                if(obj != null) {
-                    ObjectOutputStream output = handler.getOutputStream();
-                    output.writeObject(obj);
-                    output.flush();
-                }
-                queue.wait();
-            }
+        ObjectOutputStream output = handler.getOutputStream();
+        currentThread = Thread.currentThread();
+        while(!isClosed()) {
+            output.writeObject(queue.take());
+            output.flush();
         }
     }
 

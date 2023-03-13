@@ -1,5 +1,7 @@
 package net.stardust.comlib;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -21,12 +23,16 @@ public class SocketConnectionHandler implements ConnectionHandler {
         this.socket = Objects.requireNonNull(socket);
         if(socket.isConnected()) {
             try {
-                input = new ObjectInputStream(socket.getInputStream());
-                output = new ObjectOutputStream(socket.getOutputStream());
+                buildStreams();
             } catch(IOException e) {
                 throw new RuntimeException("socket connected but thrown IOException at streams", e);
             }
         }
+    }
+
+    private void buildStreams() throws IOException {
+        input = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        output = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
     }
 
     @Override
@@ -51,8 +57,7 @@ public class SocketConnectionHandler implements ConnectionHandler {
                 socket.setSoTimeout(socketInfo.getSoTimeout());
             }
             socket.connect(new InetSocketAddress(info.getIP(), info.getPort()), info.getTimeout());
-            output = new ObjectOutputStream(socket.getOutputStream());
-            input = new ObjectInputStream(socket.getInputStream());
+            buildStreams();
         } catch(IOException e) {
             throw new ConnectionException(e);
         }
