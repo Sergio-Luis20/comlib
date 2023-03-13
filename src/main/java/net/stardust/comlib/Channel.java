@@ -11,13 +11,13 @@ public abstract class Channel implements Runnable, Closeable {
     
     protected final ConnectionHandler handler;
     protected final Thread worker;
-    protected final String id;
     protected LinkedBlockingQueue<Serializable> queue;
     protected Thread currentThread;
+    private final String command;
 
-    public Channel(ConnectionHandler handler, String id) {
+    public Channel(ConnectionHandler handler, String command) {
         this.handler = Objects.requireNonNull(handler);
-        this.id = Objects.requireNonNull(id);
+        this.command = Objects.requireNonNull(command);
         queue = new LinkedBlockingQueue<>();
         worker = new Thread(this);
         worker.setDaemon(true);
@@ -48,7 +48,7 @@ public abstract class Channel implements Runnable, Closeable {
     public final void run() {
         try(this) {
             ObjectOutputStream output = handler.getOutputStream();
-            output.writeObject("register=" + id);
+            output.writeObject(command);
             output.flush();
             work();
         } catch(Exception e) {
