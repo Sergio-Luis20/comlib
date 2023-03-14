@@ -38,16 +38,7 @@ public class SocketInfo extends ConnectionInfo {
 
     public void setSoTimeout(int soTimeout) {
         this.soTimeout = soTimeout < 0 ? 0 : soTimeout;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return super.equals(o) && soTimeout == ((SocketInfo) o).soTimeout;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + soTimeout;
+        info.put("so-timeout", String.valueOf(this.soTimeout));
     }
 
 }

@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 
 public final class Communication {
     
-    public static final ConnectionInfo INFO;
+    private static final ConnectionInfo INFO;
 
     private Communication() {}
 
@@ -32,16 +32,31 @@ public final class Communication {
     }
 
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {
-        SocketConnectionHandler handler = new SocketConnectionHandler();
-        SocketInfo info = new SocketInfo(INFO.getIP(), INFO.getPort());
-        info.setTimeout(INFO.getTimeout());
-        info.setSoTimeout(0);
-        handler.connect(info);
-        return new SocketListener(id, mapper, handler);
+        return new SocketListener(id, mapper, newDefaultHandler());
+    }
+
+    public static ReadChannel newReadChannel(String id) throws ConnectionException {
+        return new ReadChannel(newDefaultHandler(), id);
+    }
+
+    public static WriteChannel newWriteChannel(String id, String receiver) throws ConnectionException {
+        return new WriteChannel(newDefaultHandler(), id, receiver);
+    }
+
+    public static ConnectionInfo newInfoCopy() {
+        return new SocketInfo(INFO.getMap());
     }
 
     public static ConnectionHandler newConnectionHandler() {
         return new SocketConnectionHandler();
+    }
+
+    private static SocketConnectionHandler newDefaultHandler() throws ConnectionException {
+        SocketConnectionHandler handler = (SocketConnectionHandler) newConnectionHandler();
+        SocketInfo info = (SocketInfo) newInfoCopy();
+        info.setSoTimeout(0);
+        handler.connect(info);
+        return handler;
     }
 
     static {

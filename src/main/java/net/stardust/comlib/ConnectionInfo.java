@@ -7,13 +7,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class ConnectionInfo {
     
     protected String ip;
     protected int port, timeout;
-    protected Map<String, String> info;
+    protected Map<String, String> info = new HashMap<>();
 
     public ConnectionInfo(String ip, int port) {
         setIP(ip);
@@ -22,7 +21,6 @@ public class ConnectionInfo {
 
     public ConnectionInfo(Path file) throws IOException {
         List<String> list = Files.readAllLines(file);
-        info = new HashMap<>();
         for(String str : list) {
             String[] pair = str.split("=");
             info.put(pair[0], pair[1]);
@@ -38,7 +36,7 @@ public class ConnectionInfo {
         setPort(Integer.parseInt(info.get("server-port")));
         String timeout = info.get("timeout");
         setTimeout(timeout == null ? 0 : Integer.parseInt(timeout));
-        this.info = info;
+        this.info.putAll(info);
     }
 
     public String getIP() {
@@ -54,6 +52,7 @@ public class ConnectionInfo {
             throw new IllegalArgumentException("invalid ip: " + ip);
         }
         this.ip = ip;
+        info.put("server-ip", ip);
     }
 
     public int getPort() {
@@ -65,6 +64,7 @@ public class ConnectionInfo {
             throw new IllegalArgumentException("invalid port: " + port);
         }
         this.port = port;
+        info.put("server-port", String.valueOf(port));
     }
 
     public int getTimeout() {
@@ -73,6 +73,7 @@ public class ConnectionInfo {
 
     public void setTimeout(int timeout) {
         this.timeout = timeout < 0 ? 0 : timeout;
+        info.put("timeout", String.valueOf(this.timeout));
     }
 
     public Map<String, String> getMap() {
@@ -87,15 +88,15 @@ public class ConnectionInfo {
         if(o == this) {
             return true;
         }
-        if(o instanceof ConnectionInfo info) {
-            return ip.equals(info.ip) && port == info.port && timeout == info.timeout;
+        if(o instanceof ConnectionInfo con) {
+            return info.equals(con.info);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ip, port, timeout);
+        return info.hashCode();
     }
 
 }
