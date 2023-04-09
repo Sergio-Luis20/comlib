@@ -31,6 +31,17 @@ public final class Communication {
         return Response.emptyResponse();
     }
 
+    public static void send(String command) throws IOException {
+        if(command != null) {
+            try(ConnectionHandler handler = newConnectionHandler()) {
+                handler.connect(INFO);
+                ObjectOutputStream output = handler.getOutputStream();
+                output.writeObject(command);
+                output.flush();
+            }
+        }
+    }
+
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {
         return new SocketListener(id, mapper, newDefaultHandler());
     }
