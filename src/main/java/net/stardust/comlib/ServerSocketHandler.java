@@ -213,7 +213,9 @@ public final class ServerSocketHandler implements ServerHandler {
                 throw ex;
             }
         } finally {
-            sender.getOutputStream().writeBoolean(!close);
+            ObjectOutputStream output = sender.getOutputStream();
+            output.writeBoolean(!close);
+            output.flush();
             if(close) {
                 sender.close();
             }

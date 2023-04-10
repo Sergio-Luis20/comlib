@@ -33,17 +33,17 @@ public final class Communication {
         return Response.emptyResponse();
     }
 
-    public static Object send(String command) throws IOException, ClassNotFoundException {
+    public static boolean send(String command) throws IOException, ClassNotFoundException {
         if(command != null) {
             try(ConnectionHandler handler = newConnectionHandler()) {
                 handler.connect(INFO);
                 ObjectOutputStream output = handler.getOutputStream();
                 output.writeObject(command);
                 output.flush();
-                return handler.getInputStream().readObject();
+                return handler.getInputStream().readBoolean();
             }
         }
-        return null;
+        return false;
     }
 
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {
