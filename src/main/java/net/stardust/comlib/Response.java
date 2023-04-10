@@ -19,6 +19,10 @@ public interface Response<T extends Serializable> extends DataHolder<T> {
         return newResponse(sender, null, status, null);
     }
 
+    public static <U extends Serializable> Response<U> emptyResponse(String sender, String receiver, int status) {
+        return newResponse(sender, receiver, status, null);
+    }
+
     public static <U extends Serializable> Response<U> newResponse(String sender, String receiver, int status, U content) {
         if(!ResponseStatus.containsStatus(status)) {
             throw new IllegalArgumentException("unknown status: " + status);

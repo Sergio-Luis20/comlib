@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 public final class Communication {
     
     private static final ConnectionInfo INFO;
+    private static ServerHandler server;
 
     private Communication() {}
 
@@ -31,15 +33,17 @@ public final class Communication {
         return Response.emptyResponse();
     }
 
-    public static void send(String command) throws IOException {
+    public static Object send(String command) throws IOException, ClassNotFoundException {
         if(command != null) {
             try(ConnectionHandler handler = newConnectionHandler()) {
                 handler.connect(INFO);
                 ObjectOutputStream output = handler.getOutputStream();
                 output.writeObject(command);
                 output.flush();
+                return handler.getInputStream().readObject();
             }
         }
+        return null;
     }
 
     public static RequestListener newRequestListener(String id, RequestMapper mapper) throws ConnectionException {
@@ -60,6 +64,20 @@ public final class Communication {
 
     public static ConnectionHandler newConnectionHandler() {
         return new SocketConnectionHandler();
+    }
+
+    public static ServerHandler getServer() {
+        if(server == null) {
+            server = ServerSocketHandler.get();
+        }
+        return server;
+    }
+
+    public static ServerHandler getServer(Logger logger) {
+        if(server == null) {
+            server = ServerSocketHandler.get(logger);
+        }
+        return server;
     }
 
     private static SocketConnectionHandler newDefaultHandler() throws ConnectionException {
