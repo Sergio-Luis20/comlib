@@ -32,22 +32,18 @@ public final class ServerSocketHandler implements ServerHandler {
 
     private static ServerSocketHandler instance;
 
-    public static ServerSocketHandler get() {
-        synchronized(instance) {
-            if(instance == null) {
-                instance = new ServerSocketHandler();
-            }
-            return instance;
+    public synchronized static ServerSocketHandler get() {
+        if(instance == null) {
+            instance = new ServerSocketHandler();
         }
+        return instance;
     }
 
-    public static ServerSocketHandler get(Logger logger) {
-        synchronized(instance) {
-            if(instance == null) {
-                instance = new ServerSocketHandler(logger);
-            }
-            return instance;
+    public synchronized static ServerSocketHandler get(Logger logger) {
+        if(instance == null) {
+            instance = new ServerSocketHandler(logger);
         }
+        return instance;
     }
 
     private ServerSocketHandler() {
@@ -67,6 +63,7 @@ public final class ServerSocketHandler implements ServerHandler {
         buildConnectionsAndThreadPool();
         logger.info("ServerSocket online");
         logger.info("Starting connection listener task");
+        closeServer = new AtomicBoolean();
         threadPool.execute(() -> connectionListenerTask());
         started = true;
     }

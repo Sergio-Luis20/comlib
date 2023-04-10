@@ -32,23 +32,25 @@ public class SocketListener extends RequestListener {
             ObjectInputStream input = handler.getInputStream();
             output.writeObject("register=" + id);
             output.flush();
-            while(!handler.isClosed()) {
-                Object obj = input.readObject();
-                if(obj instanceof Request<?> request) {
-                    Response<?> response;
-                    try {
-                        response = mapper.handle(request);
-                    } catch(MappingException e) {
-                        response = Response.emptyResponse(ResponseStatus.BAD_REQUEST);
-                        e.printStackTrace();
-                    } catch(Exception e) {
-						response = Response.emptyResponse(ResponseStatus.INTERNAL_SERVER_ERROR);
-						e.printStackTrace();
-					}
-                    output.writeObject(response);
-                    output.flush();
-                } else {
-                    throw new IOException(obj + " from " + obj.getClass() + " is not an implementation of " + Request.class);
+            if(input.readBoolean()) {
+                while(!handler.isClosed()) {
+                    Object obj = input.readObject();
+                    if(obj instanceof Request<?> request) {
+                        Response<?> response;
+                        try {
+                            response = mapper.handle(request);
+                        } catch(MappingException e) {
+                            response = Response.emptyResponse(ResponseStatus.BAD_REQUEST);
+                            e.printStackTrace();
+                        } catch(Exception e) {
+                            response = Response.emptyResponse(ResponseStatus.INTERNAL_SERVER_ERROR);
+                            e.printStackTrace();
+                        }
+                        output.writeObject(response);
+                        output.flush();
+                    } else {
+                        throw new IOException(obj + " from " + obj.getClass() + " is not an implementation of " + Request.class);
+                    }
                 }
             }
         } catch(IOException e) {
