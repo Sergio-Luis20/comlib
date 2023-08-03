@@ -1,4 +1,4 @@
-package net.stardust.comlib;
+package br.sergio.comlib;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +21,7 @@ public class MethodMapper implements RequestMapper {
     public Response<?> handle(Request<?> request) throws MappingException {
         Object content = request.getContent().orElseGet(() -> null);
         if(content == null && !permitsNullContent()) {
-            return Response.emptyResponse(request.getReceiver(), request.getSender(), ResponseStatus.PRECONDITION_REQUIRED);
+            return Response.emptyResponse(request.getReceiver(), request.getSender(), ResponseStatus.BAD_REQUEST);
         }
         RequestMethod method = request.getMethod();
         if(method == null) {
@@ -42,7 +42,7 @@ public class MethodMapper implements RequestMapper {
         if(data == null) {
             throw new CommunicationException("null response data pair");
         }
-        return Response.newResponse(request.getReceiver(), request.getSender(), data.status, data.content);
+        return Response.newResponse(request.getReceiver(), request.getSender(), data.getStatus(), data.getContent());
     }
 
     public MethodHandler getHandler() {

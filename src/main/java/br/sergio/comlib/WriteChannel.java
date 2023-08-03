@@ -1,4 +1,4 @@
-package net.stardust.comlib;
+package br.sergio.comlib;
 
 import java.io.ObjectOutputStream;
 import java.io.Serializable;

@@ -1,4 +1,4 @@
-package net.stardust.comlib;
+package br.sergio.comlib;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

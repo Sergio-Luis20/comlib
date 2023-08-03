@@ -1,11 +1,15 @@
-package net.stardust.comlib;
+package br.sergio.comlib;
 
 import java.io.Serializable;
 
 public final class ResponseData implements Serializable {
     
-    public final int status;
-    public final Serializable content;
+    private int status;
+    private Serializable content;
+
+    public ResponseData(int status) {
+        this(status, null);
+    }
 
     public ResponseData(int status, Serializable content) {
         if(!ResponseStatus.containsStatus(status)) {
@@ -13,6 +17,14 @@ public final class ResponseData implements Serializable {
         }
         this.status = status;
         this.content = content;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public Serializable getContent() {
+        return content;
     }
 
 }

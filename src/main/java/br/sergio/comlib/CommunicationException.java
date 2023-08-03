@@ -1,4 +1,4 @@
-package net.stardust.comlib;
+package br.sergio.comlib;
 
 public class CommunicationException extends RuntimeException {
     
