@@ -3,11 +3,14 @@ package br.sergio.comlib;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public final class Communication {
     
+    private static final int DEFAULT_PORT = 8196;
     private static final ConnectionInfo INFO;
     private static ServerHandler server;
 
@@ -68,14 +71,16 @@ public final class Communication {
 
     public static ServerHandler getServer() {
         if(server == null) {
-            server = ServerSocketHandler.get();
+            SocketInfo info = INFO instanceof SocketInfo socket ? socket : new SocketInfo(INFO.getMap());
+            server = ServerSocketHandler.get(info);
         }
         return server;
     }
 
     public static ServerHandler getServer(Logger logger) {
         if(server == null) {
-            server = ServerSocketHandler.get(logger);
+            SocketInfo info = INFO instanceof SocketInfo socket ? socket : new SocketInfo(INFO.getMap());
+            server = ServerSocketHandler.get(info, logger);
         }
         return server;
     }
@@ -88,9 +93,19 @@ public final class Communication {
         return handler;
     }
 
+    public static void build(ConnectionInfo info) {
+        INFO.setIP(info.getIP());
+        INFO.setPort(info.getPort());
+        INFO.setTimeout(info.getTimeout());
+        if(INFO instanceof SocketInfo socketInfo) {
+            socketInfo.setSoTimeout(info instanceof SocketInfo replacer ? replacer.getSoTimeout() : 0);
+        }
+    }
+
     static {
         try {
-            INFO = new SocketInfo(Paths.get("lib/communication-info.properties"));
+            Path infoPath = Paths.get("communication-info.properties");
+            INFO = Files.exists(infoPath) ? new SocketInfo(infoPath) : new SocketInfo("localhost", DEFAULT_PORT);
         } catch(Exception e) {
             throw new RuntimeException(e);
         }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -32,25 +33,26 @@ public final class ServerSocketHandler implements ServerHandler {
 
     private static ServerSocketHandler instance;
 
-    public synchronized static ServerSocketHandler get() {
+    public synchronized static ServerSocketHandler get(SocketInfo info) {
         if(instance == null) {
-            instance = new ServerSocketHandler();
+            instance = new ServerSocketHandler(info);
         }
         return instance;
     }
 
-    public synchronized static ServerSocketHandler get(Logger logger) {
+    public synchronized static ServerSocketHandler get(SocketInfo info, Logger logger) {
         if(instance == null) {
-            instance = new ServerSocketHandler(logger);
+            instance = new ServerSocketHandler(info, logger);
         }
         return instance;
     }
 
-    private ServerSocketHandler() {
-        this(Logger.getLogger(ServerSocketHandler.class.getSimpleName()));
+    private ServerSocketHandler(SocketInfo info) {
+        this(info, Logger.getLogger(ServerSocketHandler.class.getSimpleName()));
     }
 
-    private ServerSocketHandler(Logger logger) {
+    private ServerSocketHandler(SocketInfo info, Logger logger) {
+        this.info = Objects.requireNonNull(info);
         this.logger = Objects.requireNonNull(logger, "logger = null");
     }
 
@@ -90,10 +92,10 @@ public final class ServerSocketHandler implements ServerHandler {
     private void buildServerSocket() {
         try {
             logger.info("Starting communication server");
-            info = (SocketInfo) Communication.newInfoCopy();
-            int port = info.getPort();
-            server = new ServerSocket(info.getPort());
-            logger.info("ServerSocket started at port " + port);
+            InetSocketAddress address = new InetSocketAddress(info.getIP(), info.getPort());
+            server = new ServerSocket();
+            server.bind(address);
+            logger.info("ServerSocket started at " + address);
         } catch(Exception e) {
             logger.log(Level.SEVERE, "Fail at server initialization");
             writeLog(e);
