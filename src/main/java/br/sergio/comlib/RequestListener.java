@@ -3,20 +3,21 @@ package br.sergio.comlib;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class RequestListener implements Runnable, Closeable {
     
     protected final String id;
+    protected final ConnectionHandler handler;
     protected RequestMapper mapper;
-    protected ConnectionHandler handler;
-    private Thread thread;
+    private ExecutorService executor;
 
     public RequestListener(String id, RequestMapper mapper, ConnectionHandler handler) {
-        this.id = Objects.requireNonNull(id);
-        this.mapper = Objects.requireNonNull(mapper);
-        this.handler = Objects.requireNonNull(handler);
-        thread = new Thread(this);
-        thread.setDaemon(true);
+        this.id = Objects.requireNonNull(id, "id");
+        this.mapper = Objects.requireNonNull(mapper, "mapper");
+        this.handler = Objects.requireNonNull(handler, "handler");
+        executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     public void connect(ConnectionInfo info) throws ConnectionException {
@@ -33,14 +34,16 @@ public abstract class RequestListener implements Runnable, Closeable {
 
     @Override
     public void close() throws IOException {
-        handler.close();
+        try(handler) {
+        	executor.shutdown();
+        }
     }
 
     public void start() {
-        thread.start();
+        executor.execute(this);
     }
 
-    public String getID() {
+    public String getId() {
         return id;
     }
 
@@ -57,15 +60,14 @@ public abstract class RequestListener implements Runnable, Closeable {
             return true;
         }
         if(o instanceof RequestListener listener) {
-            return id.equals(listener.id) && mapper.equals(listener.mapper) 
-                && handler.equals(listener.handler) && thread.equals(listener.thread);
+            return id.equals(listener.id);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, mapper, handler, thread);
+        return id.hashCode();
     }
 
 }

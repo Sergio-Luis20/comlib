@@ -69,6 +69,11 @@ public final class ServerSocketHandler implements ServerHandler {
         threadPool.execute(() -> connectionListenerTask());
         started = true;
     }
+    
+    @Override
+    public boolean isRunning() {
+    	return started;
+    }
 
     @Override
     public void stop() {
@@ -107,11 +112,7 @@ public final class ServerSocketHandler implements ServerHandler {
         logger.info("Creating connections map");
         connections = new ConcurrentHashMap<>();
         logger.info("Creating thread pool");
-        threadPool = Executors.newCachedThreadPool(runnable -> {
-            Thread thread = new Thread(runnable);
-            thread.setDaemon(true);
-            return thread;
-        });
+        threadPool = Executors.newCachedThreadPool(Thread.ofPlatform().daemon()::unstarted);
     }
 
     private void connectionListenerTask() {
@@ -132,13 +133,7 @@ public final class ServerSocketHandler implements ServerHandler {
     private void newConnection(Socket socket) {
         threadPool.execute(() -> {
             listen(socket);
-            if(closeServer.get()) {
-                try {
-                    server.close();
-                } catch(IOException e) {
-                    writeLog(e);
-                }
-            }
+            if(closeServer.get()) stop();
         });
     }
 
@@ -154,6 +149,7 @@ public final class ServerSocketHandler implements ServerHandler {
                 writeLog(e);
             }
         }
+        connections.clear();
         logger.info("Connections closed");
     }
 
