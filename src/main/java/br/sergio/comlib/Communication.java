@@ -3,14 +3,11 @@ package br.sergio.comlib;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public final class Communication {
     
-    private static final int DEFAULT_PORT = 8196;
     private static final ConnectionInfo INFO;
     private static ServerHandler server;
 
@@ -36,6 +33,14 @@ public final class Communication {
         return Response.emptyResponse();
     }
 
+    public static <T extends Serializable> Response<T> sendUnsafe(Request<?> request) {
+        try {
+            return send(request);
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static boolean send(String command) throws IOException, ClassNotFoundException {
         if(command != null) {
             try(ConnectionHandler handler = newConnectionHandler()) {
@@ -53,14 +58,6 @@ public final class Communication {
         return new SocketListener(id, mapper, newDefaultHandler());
     }
 
-    public static ReadChannel newReadChannel(String id) throws ConnectionException {
-        return new ReadChannel(newDefaultHandler(), id);
-    }
-
-    public static WriteChannel newWriteChannel(String id, String receiver) throws ConnectionException {
-        return new WriteChannel(newDefaultHandler(), id, receiver);
-    }
-
     public static ConnectionInfo newInfoCopy() {
         return new SocketInfo(INFO.getMap());
     }
@@ -71,16 +68,14 @@ public final class Communication {
 
     public static ServerHandler getServer() {
         if(server == null) {
-            SocketInfo info = INFO instanceof SocketInfo socket ? socket : new SocketInfo(INFO.getMap());
-            server = ServerSocketHandler.get(info);
+            server = ServerSocketHandler.get();
         }
         return server;
     }
 
     public static ServerHandler getServer(Logger logger) {
         if(server == null) {
-            SocketInfo info = INFO instanceof SocketInfo socket ? socket : new SocketInfo(INFO.getMap());
-            server = ServerSocketHandler.get(info, logger);
+            server = ServerSocketHandler.get(logger);
         }
         return server;
     }
@@ -93,19 +88,9 @@ public final class Communication {
         return handler;
     }
 
-    public static void build(ConnectionInfo info) {
-        INFO.setIP(info.getIP());
-        INFO.setPort(info.getPort());
-        INFO.setTimeout(info.getTimeout());
-        if(INFO instanceof SocketInfo socketInfo) {
-            socketInfo.setSoTimeout(info instanceof SocketInfo replacer ? replacer.getSoTimeout() : 0);
-        }
-    }
-
     static {
         try {
-            Path infoPath = Paths.get("communication-info.properties");
-            INFO = Files.exists(infoPath) ? new SocketInfo(infoPath) : new SocketInfo("localhost", DEFAULT_PORT);
+            INFO = new SocketInfo(Paths.get("lib/communication-info.properties"));
         } catch(Exception e) {
             throw new RuntimeException(e);
         }

@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
 
 public class SocketListener extends RequestListener {
 
@@ -20,6 +21,10 @@ public class SocketListener extends RequestListener {
         super(id, mapper, handler);
     }
 
+    public SocketListener(String id, RequestMapper mapper, SocketConnectionHandler handler, ExecutorService service) {
+        super(id, mapper, handler, service);
+    }
+
     @Override
     public void start() {
         if(!handler.isConnected()) {
@@ -32,7 +37,7 @@ public class SocketListener extends RequestListener {
             output.writeObject("register=" + id);
             output.flush();
             if(handler.getInputStream().readBoolean()) {
-                super.start();
+                getExecutorService().submit(this);
             } else {
                 registrationFailed();
             }

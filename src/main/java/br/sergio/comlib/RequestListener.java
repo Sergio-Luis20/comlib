@@ -5,19 +5,24 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public abstract class RequestListener implements Runnable, Closeable {
     
     protected final String id;
-    protected final ConnectionHandler handler;
     protected RequestMapper mapper;
-    private ExecutorService executor;
+    protected ConnectionHandler handler;
+    private ExecutorService service;
 
     public RequestListener(String id, RequestMapper mapper, ConnectionHandler handler) {
+        this(id, mapper, handler, Executors.newVirtualThreadPerTaskExecutor());
+    }
+
+    public RequestListener(String id, RequestMapper mapper, ConnectionHandler handler, ExecutorService service) {
         this.id = Objects.requireNonNull(id, "id");
         this.mapper = Objects.requireNonNull(mapper, "mapper");
         this.handler = Objects.requireNonNull(handler, "handler");
-        executor = Executors.newVirtualThreadPerTaskExecutor();
+        this.service = Objects.requireNonNull(service, "service");
     }
 
     public void connect(ConnectionInfo info) throws ConnectionException {
@@ -34,14 +39,16 @@ public abstract class RequestListener implements Runnable, Closeable {
 
     @Override
     public void close() throws IOException {
-        try(handler) {
-        	executor.shutdown();
+        handler.close();
+        service.shutdown();
+        try {
+            service.awaitTermination(5, TimeUnit.SECONDS);
+        } catch(InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    public void start() {
-        executor.execute(this);
-    }
+    public abstract void start();
 
     public String getId() {
         return id;
@@ -49,6 +56,10 @@ public abstract class RequestListener implements Runnable, Closeable {
 
     public RequestMapper getMapper() {
         return mapper;
+    }
+
+    protected ExecutorService getExecutorService() {
+        return service;
     }
 
     @Override
@@ -60,14 +71,15 @@ public abstract class RequestListener implements Runnable, Closeable {
             return true;
         }
         if(o instanceof RequestListener listener) {
-            return id.equals(listener.id);
+            return id.equals(listener.id) && mapper.equals(listener.mapper) 
+                && handler.equals(listener.handler) && service.equals(listener.service);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return Objects.hash(id, mapper, handler, service);
     }
 
 }

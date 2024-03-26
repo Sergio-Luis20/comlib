@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -33,26 +32,25 @@ public final class ServerSocketHandler implements ServerHandler {
 
     private static ServerSocketHandler instance;
 
-    public synchronized static ServerSocketHandler get(SocketInfo info) {
+    public synchronized static ServerSocketHandler get() {
         if(instance == null) {
-            instance = new ServerSocketHandler(info);
+            instance = new ServerSocketHandler();
         }
         return instance;
     }
 
-    public synchronized static ServerSocketHandler get(SocketInfo info, Logger logger) {
+    public synchronized static ServerSocketHandler get(Logger logger) {
         if(instance == null) {
-            instance = new ServerSocketHandler(info, logger);
+            instance = new ServerSocketHandler(logger);
         }
         return instance;
     }
 
-    private ServerSocketHandler(SocketInfo info) {
-        this(info, Logger.getLogger(ServerSocketHandler.class.getSimpleName()));
+    private ServerSocketHandler() {
+        this(Logger.getLogger(ServerSocketHandler.class.getSimpleName()));
     }
 
-    private ServerSocketHandler(SocketInfo info, Logger logger) {
-        this.info = Objects.requireNonNull(info);
+    private ServerSocketHandler(Logger logger) {
         this.logger = Objects.requireNonNull(logger, "logger = null");
     }
 
@@ -68,11 +66,6 @@ public final class ServerSocketHandler implements ServerHandler {
         closeServer = new AtomicBoolean();
         threadPool.execute(() -> connectionListenerTask());
         started = true;
-    }
-    
-    @Override
-    public boolean isRunning() {
-    	return started;
     }
 
     @Override
@@ -97,10 +90,10 @@ public final class ServerSocketHandler implements ServerHandler {
     private void buildServerSocket() {
         try {
             logger.info("Starting communication server");
-            InetSocketAddress address = new InetSocketAddress(info.getIP(), info.getPort());
-            server = new ServerSocket();
-            server.bind(address);
-            logger.info("ServerSocket started at " + address);
+            info = (SocketInfo) Communication.newInfoCopy();
+            int port = info.getPort();
+            server = new ServerSocket(info.getPort());
+            logger.info("ServerSocket started at port " + port);
         } catch(Exception e) {
             logger.log(Level.SEVERE, "Fail at server initialization");
             writeLog(e);
@@ -112,7 +105,7 @@ public final class ServerSocketHandler implements ServerHandler {
         logger.info("Creating connections map");
         connections = new ConcurrentHashMap<>();
         logger.info("Creating thread pool");
-        threadPool = Executors.newCachedThreadPool(Thread.ofPlatform().daemon()::unstarted);
+        threadPool = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     private void connectionListenerTask() {
@@ -133,7 +126,13 @@ public final class ServerSocketHandler implements ServerHandler {
     private void newConnection(Socket socket) {
         threadPool.execute(() -> {
             listen(socket);
-            if(closeServer.get()) stop();
+            if(closeServer.get()) {
+                try {
+                    server.close();
+                } catch(IOException e) {
+                    writeLog(e);
+                }
+            }
         });
     }
 
@@ -149,7 +148,6 @@ public final class ServerSocketHandler implements ServerHandler {
                 writeLog(e);
             }
         }
-        connections.clear();
         logger.info("Connections closed");
     }
 
@@ -188,7 +186,6 @@ public final class ServerSocketHandler implements ServerHandler {
     private void handleCommand(SocketConnectionHandler sender, String command) throws IOException {
         boolean close = true;
         try {
-            RuntimeException ex = new RuntimeException("Unknown command: " + command);
             if(command.equals("closeServer")) {
                 closeServer.set(true);
             } else if(command.contains("=")) {
@@ -202,13 +199,11 @@ public final class ServerSocketHandler implements ServerHandler {
                     close = switch(split[0]) {
                         case "register" -> registerIdCommand(sender, id);
                         case "close" -> closeIdCommand(id);
-                        case "read" -> registerReadChannel(sender, id);
-                        case "write" -> registerWriteChannel(sender, id);
-                        default -> throw ex;
+                        default -> throw new RuntimeException("Unknown command: " + command);
                     };
                 }
             } else {
-                throw ex;
+                throw new RuntimeException("Unknown command: " + command);
             }
         } finally {
             ObjectOutputStream output = sender.getOutputStream();
@@ -272,57 +267,6 @@ public final class ServerSocketHandler implements ServerHandler {
         }
         connections.remove(id);
         return false;
-    }
-
-    private boolean registerReadChannel(SocketConnectionHandler handler, String id) {
-        connections.put(id, handler);
-        logger.info("Registered ReadChannel: " + id);
-        return true;
-    }
-
-    private boolean registerWriteChannel(SocketConnectionHandler handler, String id) {
-        connections.put(id, handler);
-        threadPool.execute(() -> {
-            ObjectInputStream input = handler.getInputStream();
-            SocketConnectionHandler receiver;
-            synchronized(connections) {
-                try {
-                    receiver = connections.get((String) input.readObject());
-                } catch(ClassNotFoundException | IOException | ClassCastException e) {
-                    logger.log(Level.SEVERE, "Error identifying recipient ID while registering a WriteChannel");
-                    writeLog(e);
-                    try {
-                        handler.close();
-                    } catch(IOException e1) {
-                        logger.log(Level.SEVERE, "Error when trying to close connection during exception handling during WriteChannel registration", e1);
-                        writeLog(e1);
-                    }
-                    synchronized(connections) {
-                        connections.remove(id);
-                    }
-                    return;
-                }
-            }
-            if(receiver == null) {
-                try {
-                    handler.close();
-                } catch(IOException e) {
-                    logger.log(Level.SEVERE, "Could not close a connection during a WriteChannel registration thread", e);
-                    writeLog(e);
-                }
-            } else {
-                try {
-                    ObjectOutputStream output = receiver.getOutputStream();
-                    while(!receiver.isClosed()) {
-                        output.writeObject(input.readObject());
-                    }
-                } catch(IOException | ClassNotFoundException e) {
-                    // Connection closed
-                }
-            }
-        });
-        logger.info("Registered WriteChannel: " + id);
-        return true;
     }
 
     private static synchronized void writeLog(Exception ex) {
